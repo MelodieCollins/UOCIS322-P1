@@ -22,7 +22,7 @@ log = logging.getLogger(__name__)
 
 import socket    # Basic TCP/IP communication on the internet
 import _thread   # Response computation runs concurrently with main program
-
+import os
 
 def listen(portnum):
     """
@@ -90,14 +90,40 @@ def respond(sock):
     log.info("Request was {}\n***\n".format(request))
 
     parts = request.split()
-    if len(parts) > 1 and parts[0] == "GET":
+
+    if (str(parts[1]) == "/faveicon.ico"):
+        pass
+    
+        '''
+        If page starts with (~ // ..) respond with 403 forbidden error.
+        '''
+    elif (("~" in str(parts[1])) | ("//" in str(parts[1])) | (".." in str(parts[1]))):
+        transmit(STATUS_FORBIDDEN, sock)
+        
+        '''
+        If path/to/name.html is in document path (from DOCROOT), send contents of name.html or
+        name.css with proper http response.
+        Else, respond with 404 not found error.
+        '''
+    elif ((str(parts[1])[-5:] == ".html") | (str(parts[1])[-4:] == ".css")):
+        options = get_options()
+        docroot_list = os.listdir(options.DOCROOT)
+        if str(parts[1])[1:] not in docroot_list:
+            transmit(STATUS_NOT_FOUND, sock)
+        elif str(parts[1])[1:] in docroot_list:
+            transmit(STATUS_OK, sock)
+            fp = open(options.DOCROOT + str(parts[1])[1:], "r")
+            transmit(fp.read(), sock)
+    
+    elif len(parts) > 1 and parts[0] == "GET":
         transmit(STATUS_OK, sock)
-        transmit(CAT, sock)
+        transmit(CAT, sock) 
+    
     else:
         log.info("Unhandled request: {}".format(request))
         transmit(STATUS_NOT_IMPLEMENTED, sock)
         transmit("\nI don't handle this request: {}\n".format(request), sock)
-
+    
     sock.shutdown(socket.SHUT_RDWR)
     sock.close()
     return
