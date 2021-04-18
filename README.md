@@ -5,7 +5,7 @@ This is a tiny web server in Python, to check understanding of basic web archite
 
 ### Author ###
 
-Melodie Collins, mcolli11@uoregon.edu ##
+Melodie Collins, mcolli11@uoregon.edu
 
 
 ### Date ###
